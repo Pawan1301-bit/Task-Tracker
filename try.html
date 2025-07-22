@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goal Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .add-task-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5a6fd8;
+        }
+
+        .task-item {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .task-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .complete-btn {
+            background: #28a745;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .complete-btn:hover {
+            background: #218838;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .progress-section {
+            margin-top: 15px;
+        }
+
+        .progress-entry {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .day-label {
+            font-weight: bold;
+            color: #667eea;
+            min-width: 60px;
+        }
+
+        .progress-text {
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .add-progress-section {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .add-progress-btn {
+            background: #17a2b8;
+        }
+
+        .add-progress-btn:hover {
+            background: #138496;
+        }
+
+        .completed-task {
+            opacity: 0.7;
+            background: #e8f5e8;
+        }
+
+        .completed-badge {
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .no-tasks {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Goal Tracker</h1>
+        
+        <div class="add-task-section">
+            <div class="input-group">
+                <input type="text" id="taskInput" placeholder="Enter your goal (e.g., finish dynamic programming)">
+                <button onclick="addTask()">Add Task</button>
+            </div>
+        </div>
+
+        <div id="tasksContainer">
+            <div class="no-tasks">No tasks yet. Add your first goal above!</div>
+        </div>
+    </div>
+
+    <script>
+        // Storage for tasks
+        let tasks = [];
+
+        // Load tasks from localStorage on page load
+        window.onload = function() {
+            loadFromStorage();
+            renderTasks();
+        };
+
+        // Save tasks to localStorage
+        function saveToStorage() {
+            localStorage.setItem('goalTasks', JSON.stringify(tasks));
+        }
+
+        // Load tasks from localStorage
+        function loadFromStorage() {
+            const saved = localStorage.getItem('goalTasks');
+            if (saved) {
+                tasks = JSON.parse(saved);
+            }
+        }
+
+        function addTask() {
+            const taskInput = document.getElementById('taskInput');
+            const taskText = taskInput.value.trim();
+            
+            if (taskText === '') {
+                alert('Please enter a task!');
+                return;
+            }
+
+            const newTask = {
+                id: Date.now(),
+                title: taskText,
+                progress: [],
+                completed: false
+            };
+
+            tasks.push(newTask);
+            taskInput.value = '';
+            saveToStorage();
+            renderTasks();
+        }
+
+        function addProgress(taskId) {
+            const progressInput = document.getElementById(`progress-${taskId}`);
+            const progressText = progressInput.value.trim();
+            
+            if (progressText === '') {
+                alert('Please enter your progress!');
+                return;
+            }
+
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                const dayNumber = task.progress.length + 1;
+                task.progress.push({
+                    day: dayNumber,
+                    text: progressText
+                });
+                progressInput.value = '';
+                saveToStorage();
+                renderTasks();
+            }
+        }
+
+        function completeTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = true;
+                saveToStorage();
+                renderTasks();
+            }
+        }
+
+        function deleteTask(taskId) {
+            if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
+                // Remove the task from the array
+                tasks = tasks.filter(task => task.id !== taskId);
+                // Save to localStorage
+                saveToStorage();
+                // Re-render the tasks to update the display
+                renderTasks();
+            }
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('tasksContainer');
+            
+            if (tasks.length === 0) {
+                container.innerHTML = '<div class="no-tasks">No tasks yet. Add your first goal above!</div>';
+                return;
+            }
+
+            container.innerHTML = tasks.map(task => `
+                <div class="task-item ${task.completed ? 'completed-task' : ''}" id="task-${task.id}">
+                    <div class="task-header">
+                        <span class="task-title">${task.title}</span>
+                        <div>
+                            ${task.completed ? '<span class="completed-badge">✓ Completed</span>' : 
+                              `<button class="complete-btn" onclick="completeTask(${task.id})">Mark Complete</button>`}
+                            <button class="delete-btn" onclick="deleteTask(${task.id})">Delete</button>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-section">
+                        ${task.progress.map(p => `
+                            <div class="progress-entry">
+                                <span class="day-label">Day ${p.day}:</span>
+                                <span class="progress-text">${p.text}</span>
+                            </div>
+                        `).join('')}
+                        
+                        ${!task.completed ? `
+                            <div class="add-progress-section">
+                                <input type="text" id="progress-${task.id}" placeholder="Enter today's progress...">
+                                <button class="add-progress-btn" onclick="addProgress(${task.id})">Add Progress</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Allow Enter key to add task
+        document.getElementById('taskInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        // Allow Enter key to add progress
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.target.id.startsWith('progress-')) {
+                const taskId = parseInt(e.target.id.replace('progress-', ''));
+                addProgress(taskId);
+            }
+        });
+    </script>
+</body>
+</html>
